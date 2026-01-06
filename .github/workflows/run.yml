@@ -2,7 +2,7 @@ name: Auto-Post Engine
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/5 * * * *'   # كل 5 دقائق
   workflow_dispatch:
 
 jobs:
@@ -12,19 +12,26 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Run Generator
-        run: python amed.py
+      - name: Generate new pages
+        run: |
+          python amed.py
 
-      - name: Commit changes
+      - name: Build internal linking
+        run: |
+          python internal_linker.py
+
+      - name: Commit and push changes
         run: |
           git config user.name "GitHub Bot"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "auto generate pages" || echo "no changes"
+          git commit -m "auto generate pages + internal linking" || echo "no changes"
           git push
