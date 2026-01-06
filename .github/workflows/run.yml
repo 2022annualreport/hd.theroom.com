@@ -12,30 +12,19 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Install dependencies
-        run: |
-          pip install beautifulsoup4
+      - name: Run Generator
+        run: python amed.py
 
-      - name: Generate new pages
-        run: |
-          python amed.py
-
-      - name: Build internal linking
-        run: |
-          python internal_linker.py
-
-      - name: Commit and push changes
+      - name: Commit changes
         run: |
           git config user.name "GitHub Bot"
           git config user.email "actions@github.com"
           git add .
-          git commit -m "auto generate pages + internal linking" || echo "no changes"
+          git commit -m "auto generate pages" || echo "no changes"
           git push
