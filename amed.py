@@ -166,4 +166,4 @@ class ContinuousGenerator:
 
 if __name__ == "__main__":
     bot = ContinuousGenerator()
-    bot.run_single_cycle(count=3000)
+    bot.run_single_cycle(count=1000)
