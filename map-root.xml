@@ -5,4 +5,14 @@
     <loc>https://hd.theroom.com/map-main.xml</loc>
     <lastmod>2026-01-06</lastmod>
   </sitemap>
+
+  <sitemap>
+    <loc>https://hd.theroom.com/map-pages.xml</loc>
+    <lastmod>2026-01-06</lastmod>
+  </sitemap>
+
+  <sitemap>
+    <loc>https://hd.theroom.com/map-videos.xml</loc>
+    <lastmod>2026-01-06</lastmod>
+  </sitemap>
 </sitemapindex>
