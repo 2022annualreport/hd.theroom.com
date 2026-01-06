@@ -1,0 +1,43 @@
+name: SEO Map Builder
+
+on:
+  workflow_run:
+    workflows: ["Auto-Post Engine"]
+    types:
+      - completed  # يشغّل بعد أي تشغيل ناجح للـ Auto-Post Engine
+
+jobs:
+  build:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} # فقط إذا نجح الـ workflow السابق
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Sync with remote
+        run: |
+          git fetch origin
+          git reset --hard origin/main
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt || echo "No requirements file found"
+
+      - name: Build sitemap
+        run: python build_map.py
+
+      - name: Commit and push sitemap
+        run: |
+          git config user.name "Map Bot"
+          git config user.email "map@github.com"
+          git add *.xml
+          git diff --cached --quiet || git commit -m "SEO: update site map"
+          git push origin main

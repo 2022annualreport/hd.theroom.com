@@ -1,0 +1,30 @@
+name: Auto-Post Engine
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Run Generator
+        run: python amed.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Bot"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "auto generate pages" || echo "no changes"
+          git push
