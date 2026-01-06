@@ -84,7 +84,7 @@ class ContinuousGenerator:
         os.makedirs(full_path, exist_ok=True)
         return full_path
 
-    def run_single_cycle(self, count=50):
+    def run_single_cycle(self, count=500):
         """تشغيل دورة توليد: روابط نظيفة بدون أرقام عشوائية"""
         full_path = self.get_target_path()
         current_files_in_folder = len([f for f in os.listdir(full_path) if f.endswith('.html')])
