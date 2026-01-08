@@ -4,21 +4,13 @@ import string
 import re
 from datetime import datetime, timedelta
 
-# ==============================================================================
-# GENERATOR PRO - CLEAN SLUG & SMART FOLDER MANAGEMENT
-# - روابط نظيفة تماماً بدون أرقام عشوائية في النهاية
-# - إدارة المجلدات: الحد 500 ملف لكل مجلد فرعي
-# - إنشاء مجلدين متداخلين لكل مجموعة ملفات
-# - توليد لغوي منفصل (عربي/إنجليزي) مع تحديث التاريخ لحظياً
-# ==============================================================================
-
 class ContinuousGenerator:
     def __init__(self, template_file="test.html"):
         self.template_file = template_file
         self.keywords_ar = []
         self.keywords_en = []
         self.template_content = ""
-        self.max_files_per_folder = 500  # الحد الأقصى لكل مجلد فرعي
+        self.max_files_per_folder = 500  
         
         self.emojis = ["🔥", "🎥", "🔞", "😱", "✅", "🌟", "📺", "🎬", "✨", "💎", "⚡"]
         
@@ -62,26 +54,24 @@ class ContinuousGenerator:
         return " ".join(words[:target_length])
 
     def get_target_path(self, total_count):
-        """إنشاء مجلدين متداخلين عشوائياً لكل 500 ملف تقريباً"""
-        base_root = "."
-        files_remaining = total_count
+        """إنشاء مجلدات تعتمد على التاريخ الحالي"""
+        # استخدام تاريخ اليوم كمجلد رئيسي
+        today_folder = datetime.now().strftime("%Y-%m-%d")
+        base_root = today_folder 
+        
         paths = []
-
-        while files_remaining > 0:
-            # إنشاء مجلدين متداخلين
-            first_folder = ''.join(random.choices(string.ascii_lowercase, k=3))
-            second_folder = ''.join(random.choices(string.ascii_lowercase, k=3))
-            full_path = os.path.join(base_root, first_folder, second_folder)
+        num_folders = (total_count // self.max_files_per_folder) + 1
+        
+        for i in range(num_folders):
+            # مجلد فرعي داخل مجلد اليوم (مثال: 2026-01-08/part-1)
+            sub_folder = f"part-{i+1}"
+            full_path = os.path.join(base_root, sub_folder)
             os.makedirs(full_path, exist_ok=True)
-
             paths.append(full_path)
-            # نحسب كم ملف يمكن وضعه هنا
-            chunk = min(files_remaining, self.max_files_per_folder)
-            files_remaining -= chunk
+            
+        return paths
 
-        return paths  # قائمة بكل المسارات المتاحة
-
-    def run_single_cycle(self, count=1500):
+    def run_single_cycle(self, count=500):
         folder_paths = self.get_target_path(count)
         print(f"[*] Target folders: {folder_paths}")
 
@@ -92,18 +82,18 @@ class ContinuousGenerator:
 
         base_time = datetime.utcnow()
 
-        # توليد الملفات
         file_index = 0
+        # توزيع الملفات على المجلدات المجهزة
         for folder in folder_paths:
-            current_chunk = min(len(modes) - file_index, self.max_files_per_folder)
+            current_chunk = min(count - file_index, self.max_files_per_folder)
             for i in range(current_chunk):
                 current_mode = modes[file_index]
-                file_time = base_time - timedelta(seconds=random.randint(0, 3600), microseconds=random.randint(0, 999999))
+                file_time = base_time - timedelta(seconds=random.randint(0, 3600))
 
                 formatted_date_iso = file_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                 formatted_date_sql = file_time.strftime("%Y-%m-%d %H:%M:%S")
 
-                title_len = random.choice([5, 7, 9, 11])
+                title_len = random.choice([5, 7, 9])
                 raw_title = self.build_text(title_len, title_len + 2, mode=current_mode)
                 display_title = f"{random.choice(self.emojis)} {raw_title} {random.choice(self.emojis)}"
 
@@ -114,28 +104,28 @@ class ContinuousGenerator:
                 generated_files.append({
                     "display_title": display_title,
                     "filename": filename,
-                    "desc": self.build_text(120, 350, mode=current_mode),
+                    "desc": self.build_text(120, 250, mode=current_mode), # تقليل الحجم قليلاً للمساحة
                     "keys": self.build_text(3, 8, mode=current_mode),
                     "mode": current_mode,
                     "date_iso": formatted_date_iso,
                     "date_sql": formatted_date_sql,
                     "folder": folder
                 })
-
                 file_index += 1
 
         # كتابة الملفات
         for i, file_data in enumerate(generated_files):
             content = self.template_content
 
+            # روابط داخلية ذكية من نفس المجلد أو اللغة
             other_files = [f for j, f in enumerate(generated_files) if i != j]
-            same_lang_files = [f for f in other_files if f['mode'] == file_data['mode']]
-            source_for_links = same_lang_files if len(same_lang_files) >= 3 else other_files
-            links_sample = random.sample(source_for_links, min(len(source_for_links), random.randint(3, 6)))
+            links_sample = random.sample(other_files, min(len(other_files), random.randint(3, 5)))
 
             links_html = "<div class='internal-links'><ul>"
             for link in links_sample:
-                links_html += f"<li><a href='{link['filename']}'>{link['display_title']}</a></li>"
+                # إنشاء رابط نسبي صحيح (المجلدات أصبحت متوازية الآن)
+                rel_path = f"../{os.path.basename(link['folder'])}/{link['filename']}"
+                links_html += f"<li><a href='{rel_path}'>{link['display_title']}</a></li>"
             links_html += "</ul></div>"
 
             content = content.replace("{{TITLE}}", file_data['display_title'])
@@ -143,10 +133,7 @@ class ContinuousGenerator:
             content = content.replace("{{KEYWORDS}}", file_data['keys'])
             content = content.replace("{{DATE}}", file_data['date_iso'])
             content = content.replace("{{DATE_SQL}}", file_data['date_sql'])
-
-            content = re.sub(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})', file_data['date_iso'], content)
-            content = re.sub(r'\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}', file_data['date_sql'], content)
-
+            
             if "{{INTERNAL_LINKS}}" in content:
                 content = content.replace("{{INTERNAL_LINKS}}", links_html)
             else:
@@ -154,16 +141,14 @@ class ContinuousGenerator:
 
             try:
                 file_path = os.path.join(file_data['folder'], file_data['filename'])
-                if os.path.exists(file_path):
-                    file_path = file_path.replace(".html", f"-{random.choice(string.ascii_lowercase)}.html")
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
             except Exception as e:
                 print(f"[!] Failed to write file: {e}")
         
-        print(f"✅ Created {count} clean files across {len(folder_paths)} folder(s).")
-
+        print(f"✅ Created {file_index} clean files in date-based folders.")
 
 if __name__ == "__main__":
     bot = ContinuousGenerator()
-    bot.run_single_cycle(count=500)
+    # تشغيل 300 ملف في كل دورة لتجنب مشاكل المساحة مستقبلاً
+    bot.run_single_cycle(count=300)
