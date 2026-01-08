@@ -1,22 +1,5 @@
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # هذه الأداة ستحذف البرامج المثبتة مسبقاً وغير الضرورية لتوفر لك مساحة تصل لـ 30GB
-          tool-cache: true
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+name: Auto-Post Engine
 
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
 on:
   schedule:
     - cron: '*/30 * * * *'
@@ -29,15 +12,33 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      # 1. تنظيف المساحة أولاً في نفس السيرفر
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
 
-      - uses: actions/setup-python@v4
+      # 2. سحب الكود
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 3. إعداد بايثون
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
+      # 4. تشغيل السكريبت الخاص بك
       - name: Run Generator
         run: python amed.py
 
+      # 5. حفظ التغييرات
       - name: Commit changes
         run: |
           git config user.name "GitHub Bot"
