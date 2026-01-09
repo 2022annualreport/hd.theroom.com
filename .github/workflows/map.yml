@@ -5,7 +5,7 @@ on:
     workflows: ["Auto-Post Engine"]
     types:
       - completed  # يشغّل بعد أي تشغيل ناجح للـ Auto-Post Engine
-
+ 
 jobs:
   build:
     if: ${{ github.event.workflow_run.conclusion == 'success' }} # فقط إذا نجح الـ workflow السابق
