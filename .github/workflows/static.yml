@@ -1,0 +1,64 @@
+name: Deploy Static Content with Auto-Generation
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch: # يتيح لك تشغيله يدوياً
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # لتوفير المساحة وعدم تحميل السجل القديم
+
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Generate Content and Sitemap
+        run: |
+          python amed.py        # تشغيل محرك توليد الصفحات
+          python build_map.py   # تشغيل محرك السايت ماب
+
+      - name: Commit Generated Files
+        run: |
+          git config user.name "Auto Bot"
+          git config user.email "bot@github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "Auto: Update pages and sitemap"
+          git push origin main
+        continue-on-error: true # لضمان استمرار العملية حتى لو لم يتغير شيء
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' # رفع المجلد بالكامل بعد التحديث
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
