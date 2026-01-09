@@ -1,5 +1,5 @@
 name: SEO Map Builder
-
+ 
 on:
   workflow_run:
     workflows: ["Auto-Post Engine"]
