@@ -2,7 +2,7 @@ import os
 import random
 import string
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta 
 
 class ContinuousGenerator:
     def __init__(self, template_file="test.html"):
